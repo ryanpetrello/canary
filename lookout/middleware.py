@@ -31,13 +31,17 @@ class LogStashMiddleware(object):
             return self.application(environ, start_response)
 
         environ['lookout.throw_errors'] = True
+        logger = logging.LoggerAdapter(
+            log,
+            EnvironContext(environ, self.sensitive_keys)
+        )
         try:
             return self.application(environ, start_response)
-        except Exception, exc:
+        except Exception as exc:
             for ignored in self.ignored_exceptions:
                 if isinstance(exc, ignored):
                     raise
-            self.log_exception(exc, environ)
+            logger.exception(exc.__class__)
             start_response(
                 '500 Internal Server Error',
                 [('content-type', 'text/html; charset=utf8')]
@@ -53,6 +57,3 @@ class LogStashMiddleware(object):
             </body>
             </html>
             """]
-
-    def log_exception(self, exc, environ):
-        log.exception(exc.message, EnvironContext(environ))

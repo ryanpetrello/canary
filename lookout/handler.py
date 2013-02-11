@@ -1,17 +1,15 @@
-import json
 import logging
-import socket
 import threading
-import traceback
-from datetime import datetime
-
 
 import zmq
+
+from lookout.format import LogstashFormatter
 
 
 class ZeroMQHandler(logging.Handler):
 
-    def __init__(self, address="tcp://127.0.0.1:2120", context=None):
+    def __init__(self, formatter=LogstashFormatter(),
+                 address="tcp://127.0.0.1:2120", context=None):
         super(ZeroMQHandler, self).__init__()
         self._address = address
         self._context = context
@@ -19,6 +17,7 @@ class ZeroMQHandler(logging.Handler):
             self._context = zmq.Context.instance()
         # 0mq sockets aren't threadsafe; bind them to a threadlocal
         self._local = threading.local()
+        self.setFormatter(formatter)
 
     @property
     def publisher(self):
@@ -28,21 +27,7 @@ class ZeroMQHandler(logging.Handler):
         return self._local.publisher
 
     def _send(self, data):
-        self.publisher.send_unicode(json.dumps(data))
+        self.publisher.send_unicode(data)
 
     def emit(self, record):
-        exc_info = record.exc_info
-
-        fields = {
-            'traceback': ''.join(traceback.format_exception(*exc_info)),
-        }
-        fields.update(
-            getattr(record, 'fields', {})
-        )
-        data = {
-            '@timestamp': datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-            '@source_host': socket.gethostname(),
-            '@message': str(exc_info[0]),
-            '@fields': fields
-        }
-        self._send(data)
+        self._send(self.format(record))
