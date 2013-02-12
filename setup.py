@@ -9,7 +9,7 @@ requirements = []
 tests_require = []
 
 setup(
-    name='lookout',
+    name='canary',
     version=version,
     description="",
     long_description=None,
@@ -32,7 +32,7 @@ setup(
     keywords='web framework wsgi logstash logging zeromq',
     author='Ryan Petrello',
     author_email='ryan@ryanpetrello.com',
-    url='http://github.com/ryanpetrello/lookout',
+    url='http://github.com/ryanpetrello/canary',
     license='MIT',
     packages=find_packages(exclude=['ez_setup', 'tests']),
     include_package_data=True,
