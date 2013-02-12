@@ -58,3 +58,51 @@ with ``canary.middleware.LogStashMiddleware``:
         httpd = make_server('', 8080, LogStashMiddleware(app))
         print "Serving on port 8080..."
         httpd.serve_forever()
+
+Excluding Certain Exceptions
+----------------------------
+
+You may want to prevent ``canary`` from logging certain types of exceptions.
+To do so, pass a list of exceptions into the ``LogStashMiddleware``
+constructor:
+
+.. code:: python
+
+    app = LogStashMiddleware(app, ignored_exceptions=[SomePrivateException])
+
+Filtering Sensitive Data
+------------------------
+
+``canary`` automatically populates exception logs with contextual data from the
+WSGI ``environ``.  Sometimes, though, this data can contain sensitive details,
+like customer's login credentials.  ``canary`` makes it easy to filter certain
+request arguments from the logs it produces:
+
+.. code:: python
+
+    app = LogStashMiddleware(app, sensitive_keys=['password', 'cc_number'])
+
+Development
+-----------
+
+Source hosted at `GitHub <https://github.com/ryanpetrello/canary>`_.
+Report issues and feature requests on `GitHub
+Issues <https://github.com/ryanpetrello/canary/issues>`_.
+
+To fix bugs or add features to zombie, a GitHub account is required.
+
+The general practice for contributing is to `fork zombie
+<https://help.github.com/articles/fork-a-repo>`_ and make changes in the
+``next`` branch. When you're finished, `send a pull request
+<https://help.github.com/articles/using-pull-requests>`_ and your patch will
+be reviewed.
+
+Tests require ``tox`` and can be run with ``$ pip install tox && tox``.
+
+All contributions must:
+
+* Include accompanying tests.
+* Include API documentation if new features or API methods are changed/added.
+* Be (generally) compliant with PEP8.
+* Not break the tests or build. Before issuing a pull request, ensure that all
+  tests still pass across multiple versions of Python.
