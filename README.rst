@@ -3,8 +3,25 @@
 Example Usage
 -------------
 
-To report errors in your WSGI application, wrap your WSGI app with
-``canary.middleware.LogStashMiddleware``:
+Assuming ``logstash`` is running and bound to a **0mq** socket at
+``tcp://0.0.0.0:2120``::
+
+    $ cat logstash.conf
+    input {
+        zeromq {
+            type => 'python-exception'
+            mode => 'server'
+            topology => 'pushpull'
+            address => 'tcp://0.0.0.0:2120'
+            charset => 'UTF-8'
+        }
+    }
+    output {
+        debug => true
+    }
+
+...to report exceptions thrown by your WSGI application, wrap your WSGI app
+with ``canary.middleware.LogStashMiddleware``:
 
 .. code:: python
 
@@ -41,20 +58,3 @@ To report errors in your WSGI application, wrap your WSGI app with
         httpd = make_server('', 8080, LogStashMiddleware(app))
         print "Serving on port 8080..."
         httpd.serve_forever()
-
-::
-
-    ~/canary $ python demo.py
-    Serving on port 8080...
-    ^Z
-    zsh: suspended  python demo.py
-    ~/canary $ bg
-    [1]  - continued  python demo.py
-    ~/canary $ curl -I "http://localhost:8080/"
-    HTTP/1.0 500 Internal Server Error
-    Date: Tue, 12 Feb 2013 22:56:46 GMT
-    Server: WSGIServer/0.1 Python/2.7.2
-    content-type: text/html; charset=utf8
-    Content-Length: 334
-    
-    1.0.0.127.in-addr.arpa - - [12/Feb/2013 17:56:46] "HEAD / HTTP/1.1" 500 334
