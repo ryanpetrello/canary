@@ -36,33 +36,28 @@ class LogStashMiddleware(object):
         # We want to be careful about not sending headers and the content type
         # that the app has committed to twice (if there is an exception in
         # the iterator body of the response)
+        if environ.get('canary.throw_errors'):
+            return self.application(environ, start_response)
+
+        environ['canary.throw_errors'] = True
         logger = logging.LoggerAdapter(
             log,
             EnvironContext(environ, self.sensitive_keys)
         )
         environ['canary.logger'] = logger
 
-        iterable = None
         try:
-            iterable = self.application(environ, start_response)
-            for chunk in iterable:
-                yield chunk
+            return self.application(environ, start_response)
         except Exception as exc:
-            for ignored in self.ignored_exceptions:
-                if isinstance(exc, ignored):
-                    raise
-            logger.exception(exc.__class__)
-            start_response(
-                '500 Internal Server Error',
-                [('content-type', 'text/html; charset=utf8')]
-            )
+            return self._handle_exception(environ, start_response, exc)
 
-            for chunk in [self.DEFAULT_ERROR]:
-                yield chunk
-        finally:
-            if hasattr(iterable, 'close'):
-                try:
-                    iterable.close()
-                except Exception as exc:
-                    logger.exception(exc.__class__)
-                    raise
+    def _handle_exception(self, environ, start_response, exc):
+        for ignored in self.ignored_exceptions:
+            if isinstance(exc, ignored):
+                raise
+        environ['canary.logger'].exception(exc.__class__)
+        start_response(
+            '500 Internal Server Error',
+            [('content-type', 'text/html; charset=utf8')]
+        )
+        return [self.DEFAULT_ERROR]
