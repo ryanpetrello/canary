@@ -89,9 +89,9 @@ Source hosted at `GitHub <https://github.com/ryanpetrello/canary>`_.
 Report issues and feature requests on `GitHub
 Issues <https://github.com/ryanpetrello/canary/issues>`_.
 
-To fix bugs or add features to zombie, a GitHub account is required.
+To fix bugs or add features to ``canary``, a GitHub account is required.
 
-The general practice for contributing is to `fork zombie
+The general practice for contributing is to `fork canary
 <https://help.github.com/articles/fork-a-repo>`_ and make changes in the
 ``next`` branch. When you're finished, `send a pull request
 <https://help.github.com/articles/using-pull-requests>`_ and your patch will
