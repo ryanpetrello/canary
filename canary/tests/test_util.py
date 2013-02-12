@@ -3,7 +3,7 @@ import json
 from cStringIO import StringIO
 from wsgiref.util import setup_testing_defaults
 
-from canary.util import EnvironContext, filtered_environ
+from canary.util import EnvironContext
 
 
 class TestEnvironContext(unittest.TestCase):
@@ -79,18 +79,10 @@ class TestEnvironContext(unittest.TestCase):
             'CONTENT_LENGTH': len(POST),
             'wsgi.input': io
         }, ('password', 'cc_number'))
-        raw = json.dumps(context._environ)
+        raw = json.dumps(context.filtered_environ)
         assert 'abc123' not in raw
         assert '4111111111111111' not in raw
         assert 'secret' not in raw
-
-    def test_filtered_environ(self):
-        filtered = filtered_environ({
-            'QUERY_STRING': 'cc_number=4111111111111111'
-        }, sensitive_values=('4111111111111111',))
-        assert filtered == {
-            'QUERY_STRING': 'cc_number=********'
-        }
 
     def test_context_excludes_os_environ_variables(self):
         environ = {}

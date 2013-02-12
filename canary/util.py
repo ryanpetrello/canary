@@ -16,22 +16,21 @@ class EnvironContext(object):
                                should be filtered out of debug data (e.g., CC
                                numbers and passwords)
         """
-        self._environ = filtered_environ(
-            environ,
-            self._get_sensitive_values(environ, sensitive_keys)
-        )
+        self._environ = environ
+        self._sensitive_keys = sensitive_keys
 
     @property
     def _metadata(self):
+        environ = self.filtered_environ
         data = {}
-        data['HTTP_SCHEME'] = guess_scheme(self._environ)
+        data['HTTP_SCHEME'] = guess_scheme(environ)
         cgi_vars = data['CGI Variables'] = {}
         wsgi_vars = data['WSGI Variables'] = {}
         hide_vars = ['wsgi.errors', 'wsgi.input',
                      'wsgi.multithread', 'wsgi.multiprocess',
                      'wsgi.run_once', 'wsgi.version',
                      'wsgi.url_scheme', 'webob._parsed_cookies']
-        for name, value in self._environ.items():
+        for name, value in environ.items():
             if name.upper() == name:
                 if name in os.environ:  # Skip OS environ variables
                     continue
@@ -39,20 +38,21 @@ class EnvironContext(object):
                     cgi_vars[name] = value
             elif name not in hide_vars:
                 wsgi_vars[name] = value
-        proc_desc = tuple([int(bool(self._environ[key]))
+        proc_desc = tuple([int(bool(environ[key]))
                            for key in ('wsgi.multiprocess',
                                        'wsgi.multithread',
                                        'wsgi.run_once')])
         wsgi_vars['wsgi process'] = self.process_combos[proc_desc]
         return {'fields': data}
 
-    def _get_sensitive_values(self, environ, sensitive_keys):
+    @property
+    def sensitive_values(self):
         """
         Returns a list of sensitive GET/POST values to filter from logs.
         """
         values = set()
-        params = EnvironContext.params(environ)
-        for key in sensitive_keys:
+        params = EnvironContext.params(self._environ)
+        for key in self._sensitive_keys:
             if key in params:
                 values |= set(params[key])
         return values
@@ -100,37 +100,37 @@ class EnvironContext(object):
                 params[k] = _POST[k]
         return params
 
+    @property
+    def filtered_environ(self):
+        """
+        A WSGI environ with which has had sensitive values filtered
+        """
 
-def filtered_environ(environ, sensitive_values):
-    """
-    Filter sensitive values from the environ
+        # Compile an regex of OR'ed strings to filter out
+        sensitive_values_re = re.compile(
+            '|'.join([
+                re.escape(v)
+                for v in self.sensitive_values
+            ])
+        )
 
-    :param environ: the WSGI environ for the request
-    :param sensitive_values: a list of values to filter from the WSGI environ
-    """
-
-    # Compile an regex of OR'ed strings to filter out
-    sensitive_values_re = re.compile(
-        '|'.join([re.escape(v) for v in sensitive_values])
-    )
-
-    def _gen(o):
-        def _filter(string):
-            if sensitive_values_re.pattern:
-                return sensitive_values_re.sub('********', string)
-            return string
-        if isinstance(o, basestring):
-            return _filter(o)
-        elif isinstance(o, (list, tuple)):
-            return [
-                _gen(x)
-                for x in o
-            ]
-        elif isinstance(o, dict):
-            return dict(
-                (k, _gen(v))
-                for k, v in o.items()
-            )
-        else:
-            return _filter(str(o))
-    return _gen(environ)
+        def _gen(o):
+            def _filter(string):
+                if sensitive_values_re.pattern:
+                    return sensitive_values_re.sub('********', string)
+                return string
+            if isinstance(o, basestring):
+                return _filter(o)
+            elif isinstance(o, (list, tuple)):
+                return [
+                    _gen(x)
+                    for x in o
+                ]
+            elif isinstance(o, dict):
+                return dict(
+                    (k, _gen(v))
+                    for k, v in o.items()
+                )
+            else:
+                return _filter(str(o))
+        return _gen(self._environ)
