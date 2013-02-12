@@ -3,13 +3,10 @@ import threading
 
 import zmq
 
-from lookout.format import LogstashFormatter
-
 
 class ZeroMQHandler(logging.Handler):
 
-    def __init__(self, formatter=LogstashFormatter(),
-                 address="tcp://127.0.0.1:2120", context=None):
+    def __init__(self, address="tcp://127.0.0.1:2120", context=None):
         super(ZeroMQHandler, self).__init__()
         self._address = address
         self._context = context
@@ -17,7 +14,6 @@ class ZeroMQHandler(logging.Handler):
             self._context = zmq.Context.instance()
         # 0mq sockets aren't threadsafe; bind them to a threadlocal
         self._local = threading.local()
-        self.setFormatter(formatter)
 
     @property
     def publisher(self):

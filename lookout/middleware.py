@@ -11,16 +11,12 @@ class LogStashMiddleware(object):
     Includes the URL, the exception, and the CGI/WSGI context metadata.
 
     :param application: the WSGI application to wrap
-    :param sensitive_keys: a list of HTTP request argument names that
-                           should be filtered out of context data (e.g., CC
-                           numbers and passwords)
     :param ignored_exceptions: a list of exceptions which should be ignored
     """
 
-    def __init__(self, application, sensitive_keys=[], ignored_exceptions=[]):
+    def __init__(self, application, ignored_exceptions=[]):
 
         self.application = application
-        self.sensitive_keys = sensitive_keys
         self.ignored_exceptions = ignored_exceptions
 
     def __call__(self, environ, start_response):
@@ -31,10 +27,7 @@ class LogStashMiddleware(object):
             return self.application(environ, start_response)
 
         environ['lookout.throw_errors'] = True
-        logger = logging.LoggerAdapter(
-            log,
-            EnvironContext(environ, self.sensitive_keys)
-        )
+        logger = logging.LoggerAdapter(log, EnvironContext(environ))
         try:
             return self.application(environ, start_response)
         except Exception as exc:

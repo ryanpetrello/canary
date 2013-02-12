@@ -5,9 +5,8 @@ from wsgiref.util import guess_scheme
 
 class EnvironContext(object):
 
-    def __init__(self, environ, sensitive_keys):
+    def __init__(self, environ):
         self._environ = environ
-        self._sensitive_keys = sensitive_keys
 
     @property
     def metadata(self):
