@@ -6,7 +6,7 @@ from wsgiref.util import guess_scheme
 class EnvironContext(object):
 
     def __init__(self, environ):
-        self._environ = environ
+        self._environ = environ.copy()
 
     @property
     def metadata(self):

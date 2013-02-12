@@ -15,7 +15,6 @@ class LogStashMiddleware(object):
     """
 
     def __init__(self, application, ignored_exceptions=[]):
-
         self.application = application
         self.ignored_exceptions = ignored_exceptions
 

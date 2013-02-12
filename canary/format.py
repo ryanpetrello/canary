@@ -14,10 +14,11 @@ class LogstashFormatter(logging.Formatter):
     DEFAULT_KEYS = ['fields']
 
     def __init__(self, keys=DEFAULT_KEYS, *args, **kwargs):
-        log_format = ' '.join(['%({})'] * len(keys))
+        log_format = ' '.join(['%({0})'] * len(keys))
         custom_format = log_format.format(*keys)
 
-        super(LogstashFormatter, self).__init__(
+        logging.Formatter.__init__(
+            self,
             fmt=custom_format,
             *args,
             **kwargs
@@ -34,11 +35,13 @@ class LogstashFormatter(logging.Formatter):
         log_record = {
             '@message': record.message,
             '@source_host': socket.gethostname(),
-            'traceback': self.formatException(record.exc_info)
         }
+        if getattr(record, 'exc_info', None):
+            log_record['traceback'] = self.formatException(record.exc_info)
 
         for formatter in formatters:
-            log_record[formatter] = record.__dict__[formatter]
+            if formatter in record.__dict__:
+                log_record[formatter] = record.__dict__[formatter]
 
         return log_record
 

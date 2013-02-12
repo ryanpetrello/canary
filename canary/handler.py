@@ -6,8 +6,9 @@ import zmq
 
 class ZeroMQHandler(logging.Handler):
 
-    def __init__(self, address="tcp://127.0.0.1:2120", context=None):
-        super(ZeroMQHandler, self).__init__()
+    def __init__(self, address="tcp://127.0.0.1:2120", context=None,
+                 *args, **kwargs):
+        logging.Handler.__init__(self)
         self._address = address
         self._context = context
         if context is None:

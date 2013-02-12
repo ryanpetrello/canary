@@ -5,7 +5,7 @@ version = '0.1.0'
 #
 # determine requirements
 #
-requirements = []
+requirements = ['pyzmq']
 tests_require = []
 
 setup(
@@ -38,5 +38,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=requirements,
-    tests_require=tests_require
+    tests_require=tests_require,
+    test_suite='tests'
 )
