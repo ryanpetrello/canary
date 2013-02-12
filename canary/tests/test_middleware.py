@@ -45,3 +45,34 @@ class TestMiddleware(ListeningTest):
         ):
             assert header in record['fields']['CGI Variables']
         assert 'WSGI Variables' in record['fields']
+
+
+class IgnoredException(Exception):
+    pass
+
+
+class TestIgnoredExceptions(TestMiddleware):
+
+    @property
+    def app(self):
+        def a(environ, start_response):
+            raise IgnoredException('Ignored')
+        return a
+
+    def _make_request(self, environ=None, **kw):
+        environ = environ or {}
+        setup_testing_defaults(environ)
+
+        def start_response(status, response_headers, exc_info=None):
+            pass  # pragma: nocover
+
+        LogStashMiddleware(self.app, ignored_exceptions=[IgnoredException])(
+            environ,
+            start_response
+        )
+
+    def test_simple_exception(self):
+        self.assertRaises(
+            IgnoredException,
+            self._make_request
+        )

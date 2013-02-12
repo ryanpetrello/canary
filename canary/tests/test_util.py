@@ -1,6 +1,7 @@
 import unittest
 import json
 from cStringIO import StringIO
+from wsgiref.util import setup_testing_defaults
 
 from canary.util import EnvironContext, filtered_environ
 
@@ -90,3 +91,10 @@ class TestEnvironContext(unittest.TestCase):
         assert filtered == {
             'QUERY_STRING': 'cc_number=********'
         }
+
+    def test_context_excludes_os_environ_variables(self):
+        environ = {}
+        setup_testing_defaults(environ)
+        environ.update({'HOME': '/home/john'})
+        context = EnvironContext(environ)
+        assert 'HOME' not in context['fields']['CGI Variables']
