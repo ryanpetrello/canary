@@ -2,6 +2,7 @@
 
 Example Usage
 -------------
+::
 
     import argparse
     import logging
