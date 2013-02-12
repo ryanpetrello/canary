@@ -2,15 +2,16 @@
 
 Example Usage
 -------------
+
+To report errors in your WSGI application, wrap your WSGI app with
+``canary.middleware.LogStashMiddleware``:
+
 .. code:: python
 
-    import argparse
-    import logging
+    from logging.config import dictConfig as load_logging_config
     from wsgiref.simple_server import make_server
     from wsgiref.util import setup_testing_defaults
     
-    from canary.format import LogstashFormatter
-    from canary.handler import ZeroMQHandler
     from canary.middleware import LogStashMiddleware
     
     
@@ -19,18 +20,23 @@ Example Usage
         assert True is False
     
     if __name__ == '__main__':
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            '--address',
-            action="store",
-            default='tcp://127.0.0.1:2120'
-        )
-    
-        log = logging.getLogger('canary')
-        handler = ZeroMQHandler(**vars(parser.parse_args()))
-        handler.setFormatter(LogstashFormatter())
-        log.addHandler(handler)
-        log.setLevel(logging.DEBUG)
+        load_logging_config({
+            'version': 1,
+            'loggers': {'canary': {'level': 'DEBUG', 'handlers': ['zeromq']}},
+            'handlers': {
+                'zeromq': {
+                    'level': 'ERROR',
+                    'class': 'canary.handler.ZeroMQHandler',
+                    'address': 'tcp://127.0.0.1:2120',
+                    'formatter': 'logstash'
+                }
+            },
+            'formatters': {
+                'logstash': {
+                    '()': 'canary.format.LogstashFormatter'
+                }
+            }
+        })
     
         httpd = make_server('', 8080, LogStashMiddleware(app))
         print "Serving on port 8080..."
