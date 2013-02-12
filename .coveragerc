@@ -1,2 +1,5 @@
 [run]
 source = canary
+
+[report]
+show_missing = 1
