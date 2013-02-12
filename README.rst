@@ -2,7 +2,7 @@
 
 Example Usage
 -------------
-::
+.. code:: python
 
     import argparse
     import logging
