@@ -39,5 +39,5 @@ setup(
     zip_safe=False,
     install_requires=requirements,
     tests_require=tests_require,
-    test_suite='tests'
+    test_suite='canary'
 )

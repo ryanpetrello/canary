@@ -31,8 +31,6 @@ class EnvironContext(object):
                     cgi_vars[name] = value
             elif name not in hide_vars:
                 wsgi_vars[name] = value
-        if self._environ['wsgi.version'] != (1, 0):
-            wsgi_vars['wsgi.version'] = self._environ['wsgi.version']
         proc_desc = tuple([int(bool(self._environ[key]))
                            for key in ('wsgi.multiprocess',
                                        'wsgi.multithread',
