@@ -49,18 +49,6 @@ class LogstashFormatter(logging.Formatter):
         """Formats a log record and serializes to JSON"""
         record = self.serialize(record)
 
-        # Compile an regex of OR'ed strings to filter out
-        sensitive_values_re = re.compile(
-            '|'.join([re.escape(v) for v in []])
-        )
-
-        #
-        # Compile a regex for single punctuation characters
-        # We'll use this to avoid filtering out user input which represents
-        # JSON structure, e.g., {, :, }
-        #
-        punctuation_re = re.compile('^[^0-9a-zA-Z]$')
-
         class PyObjectEncoder(json.JSONEncoder):
             """
             Because we're not actually decoding this on the other end,
@@ -72,7 +60,5 @@ class LogstashFormatter(logging.Formatter):
 
         with closing(StringIO()) as output:
             for c in PyObjectEncoder().iterencode(record):
-                if sensitive_values_re.pattern and not punctuation_re.match(c):
-                    c = sensitive_values_re.sub('********', c)
                 output.write(c)
             return output.getvalue()
