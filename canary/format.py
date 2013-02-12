@@ -11,7 +11,7 @@ class LogstashFormatter(logging.Formatter):
     A custom JSON formatter intended for consumption by logstash
     """
 
-    DEFAULT_KEYS = ['fields', 'message']
+    DEFAULT_KEYS = ['fields']
 
     def __init__(self, keys=DEFAULT_KEYS, *args, **kwargs):
         log_format = ' '.join(['%({})'] * len(keys))
@@ -40,7 +40,7 @@ class LogstashFormatter(logging.Formatter):
         for formatter in formatters:
             log_record[formatter] = record.__dict__[formatter]
 
-        return record
+        return log_record
 
     def format(self, record):
         """Formats a log record and serializes to JSON"""
