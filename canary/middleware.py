@@ -27,6 +27,7 @@ class LogStashMiddleware(object):
 
         environ['canary.throw_errors'] = True
         logger = logging.LoggerAdapter(log, EnvironContext(environ))
+        environ['canary.logger'] = logger
         try:
             return self.application(environ, start_response)
         except Exception as exc:

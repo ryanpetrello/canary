@@ -5,8 +5,8 @@ from wsgiref.util import guess_scheme
 
 class EnvironContext(object):
 
-    def __init__(self, environ):
-        self._environ = environ.copy()
+    def __init__(self, environ, sensitive_values=[]):
+        self._environ = filter_environ(environ.copy(), sensitive_values)
 
     @property
     def metadata(self):
@@ -14,6 +14,8 @@ class EnvironContext(object):
         Compose additional information about the CGI and WSGI environment.
 
         :param environ: the WSGI environ for the request
+        :param sensitive_values: a list of values to filter from the WSGI
+                                 environ
         """
         data = {}
         data['HTTP_SCHEME'] = guess_scheme(self._environ)
@@ -55,3 +57,13 @@ class EnvironContext(object):
         (1, 0, 1): 'CGI',
         (1, 1, 1): 'Multi thread/process CGI (?)',
     }
+
+
+def filter_environ(environ, sensitive_values):
+    """
+    Filter sensitive values from the environ
+
+    :param environ: the WSGI environ for the request
+    :param sensitive_values: a list of values to filter from the WSGI environ
+    """
+    return environ
