@@ -29,10 +29,10 @@ class TestMiddleware(ListeningTest):
         def start_response(status, response_headers, exc_info=None):
             pass
 
-        LogStashMiddleware(self.app)(
+        list(LogStashMiddleware(self.app)(
             environ,
             start_response
-        )
+        ))
         return environ
 
     def test_simple_exception(self):
@@ -66,10 +66,10 @@ class TestIgnoredExceptions(TestMiddleware):
         def start_response(status, response_headers, exc_info=None):
             pass  # pragma: nocover
 
-        LogStashMiddleware(self.app, ignored_exceptions=[IgnoredException])(
+        list(LogStashMiddleware(self.app, ignored_exceptions=[IgnoredException])(
             environ,
             start_response
-        )
+        ))
 
     def test_simple_exception(self):
         self.assertRaises(
