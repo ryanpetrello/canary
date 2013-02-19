@@ -11,8 +11,9 @@ tests_require = []
 setup(
     name='canary',
     version=version,
-    description="",
-    long_description=None,
+    description=("canary is a small library for recording and shipping"
+                 "exceptions from Python to logstash via ZeroMQ."),
+    long_description="",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
