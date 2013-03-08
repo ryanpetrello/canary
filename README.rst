@@ -3,6 +3,8 @@
 .. _travis: http://travis-ci.org/ryanpetrello/canary
 .. |travis| image:: https://secure.travis-ci.org/ryanpetrello/canary.png
 
+|travis|_
+
 Example Usage
 -------------
 
