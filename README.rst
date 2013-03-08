@@ -1,5 +1,8 @@
 ``canary`` is a small library for recording and shipping exceptions from Python to `logstash <http://logstash.net>`_ via `ZeroMQ <http://www.zeromq.org>`_.
 
+.. _travis: http://travis-ci.org/ryanpetrello/canary
+.. |travis| image:: https://secure.travis-ci.org/ryanpetrello/canary.png
+
 Example Usage
 -------------
 
