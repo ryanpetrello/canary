@@ -10,14 +10,16 @@ class TestEnvironContext(unittest.TestCase):
 
     def test_GET_params(self):
         params = EnvironContext.params({
-            'QUERY_STRING': 'a=1&b=2'
+            'QUERY_STRING': 'a=1&b=2',
+            'wsgi.input': StringIO()
         })
         assert params['a'] == ['1']
         assert params['b'] == ['2']
 
     def test_multiple_GET_params(self):
         params = EnvironContext.params({
-            'QUERY_STRING': 'a=1&a=2&b=3'
+            'QUERY_STRING': 'a=1&a=2&b=3',
+            'wsgi.input': StringIO()
         })
         assert params['a'] == ['1', '2']
         assert params['b'] == ['3']
@@ -29,8 +31,10 @@ class TestEnvironContext(unittest.TestCase):
         io.seek(0)
 
         params = EnvironContext.params({
+            'REQUEST_METHOD': 'POST',
             'QUERY_STRING': '',
             'CONTENT_LENGTH': len(params),
+            'CONTENT_TYPE': 'application/x-www-form-urlencoded',
             'wsgi.input': io
         })
         assert params['a'] == ['1']
@@ -43,8 +47,10 @@ class TestEnvironContext(unittest.TestCase):
         io.seek(0)
 
         params = EnvironContext.params({
+            'REQUEST_METHOD': 'POST',
             'QUERY_STRING': '',
             'CONTENT_LENGTH': len(params),
+            'CONTENT_TYPE': 'application/x-www-form-urlencoded',
             'wsgi.input': io
         })
         assert params['a'] == ['1', '2']
@@ -57,8 +63,10 @@ class TestEnvironContext(unittest.TestCase):
         io.seek(0)
 
         params = EnvironContext.params({
+            'REQUEST_METHOD': 'POST',
             'QUERY_STRING': 'a=4&b=5',
             'CONTENT_LENGTH': len(params),
+            'CONTENT_TYPE': 'application/x-www-form-urlencoded',
             'wsgi.input': io
         })
         assert len(params['a']) == 3

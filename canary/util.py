@@ -1,8 +1,25 @@
 import os
 import re
+import cgi
+import tempfile
 from urlparse import parse_qs
 
 from wsgiref.util import guess_scheme
+
+
+def cachedproperty(f):
+    """returns a cached property that is calculated by function f"""
+    def get(self):
+        try:
+            return self._property_cache[f]
+        except AttributeError:
+            self._property_cache = {}
+            x = self._property_cache[f] = f(self)
+            return x
+        except KeyError:
+            x = self._property_cache[f] = f(self)
+            return x
+    return property(get)
 
 
 class EnvironContext(object):
@@ -19,7 +36,7 @@ class EnvironContext(object):
         self._environ = environ
         self._sensitive_keys = sensitive_keys
 
-    @property
+    @cachedproperty
     def _metadata(self):
         environ = self.filtered_environ
         data = {}
@@ -81,24 +98,64 @@ class EnvironContext(object):
         Given a WSGI environ context, returns a list of mapping of parsed GET
         and POST variables.
         """
+        environ = environ.copy()
         params = parse_qs(environ.get('QUERY_STRING', ''))
-        _POST = {}
 
-        try:
-            size = int(environ.get('CONTENT_LENGTH', 0))
-        except (ValueError):
-            size = 0
-        if size > 0:
-            io = environ['wsgi.input']
-            _POST = parse_qs(io.read(size))
-            io.seek(0)
+        environ['QUERY_STRING'] = ''
+        fp, length = EnvironContext._copy_body_to_tempfile(environ)
+        environ.setdefault('CONTENT_LENGTH', length)
 
-        for k, v in _POST.items():
+        fs = cgi.FieldStorage(
+            fp=fp,
+            environ=environ,
+            keep_blank_values=True
+        )
+
+        for k in fs:
             if k in params:
-                params[k].extend(_POST[k])
+                params[k].extend(fs.getlist(k))
             else:
-                params[k] = _POST[k]
+                params[k] = fs.getlist(k)
+
         return params
+
+    @classmethod
+    def _copy_body_to_tempfile(cls, environ):
+        """
+        Copy wsgi.input to a tempfile so it can be reused.
+        """
+        try:
+            length = int(environ.get('CONTENT_LENGTH', 0))
+        except ValueError:
+            length = 0
+
+        fileobj = tempfile.SpooledTemporaryFile(1024*1024)
+        if length:
+            remaining = length
+            while remaining > 0:
+                data = environ['wsgi.input'].read(min(remaining, 65536))
+                if not data:
+                    raise IOError(
+                        "Client disconnected (%s more bytes were expected)"
+                        % remaining
+                    )
+                fileobj.write(data)
+                remaining -= len(data)
+        else:
+            body = environ['wsgi.input'].read()
+            length = len(body)
+            fileobj.write(body)
+
+        fileobj.seek(0)
+        environ['wsgi.input'] = fileobj
+        return fileobj, length
+
+    @classmethod
+    def copy_body(cls, wsgi_input):
+        """
+        Copy a ``wsgi.input`` for reading.
+        """
+        pass
 
     @property
     def filtered_environ(self):
