@@ -35,7 +35,11 @@ class LogstashFormatter(logging.Formatter):
             '@source_host': socket.gethostname(),
         }
         if getattr(record, 'exc_info', None):
-            log_record['traceback'] = self.formatException(record.exc_info)
+            log_record['traceback'] = getattr(
+                record,
+                'filter_sensitive',
+                lambda x: x
+            )(self.formatException(record.exc_info))
 
         for formatter in formatters:
             if formatter in record.__dict__:

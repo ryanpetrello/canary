@@ -60,9 +60,9 @@ class EnvironContext(object):
                                        'wsgi.multithread',
                                        'wsgi.run_once')])
         wsgi_vars['wsgi process'] = self.process_combos[proc_desc]
-        return {'fields': data}
+        return {'fields': data, 'filter_sensitive': self._filter_sensitive}
 
-    @property
+    @cachedproperty
     def sensitive_values(self):
         """
         Returns a list of sensitive GET/POST values to filter from logs.
@@ -162,7 +162,9 @@ class EnvironContext(object):
         """
         A WSGI environ with which has had sensitive values filtered
         """
+        return self._filter_sensitive(self._environ)
 
+    def _filter_sensitive(self, value):
         # Compile an regex of OR'ed strings to filter out
         sensitive_values_re = re.compile(
             '|'.join([
@@ -190,4 +192,4 @@ class EnvironContext(object):
                 )
             else:
                 return _filter(str(o))
-        return _gen(self._environ)
+        return _gen(value)
