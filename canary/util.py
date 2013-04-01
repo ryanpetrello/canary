@@ -141,21 +141,10 @@ class EnvironContext(object):
                     )
                 fileobj.write(data)
                 remaining -= len(data)
-        else:
-            body = environ['wsgi.input'].read()
-            length = len(body)
-            fileobj.write(body)
 
         fileobj.seek(0)
         environ['wsgi.input'] = fileobj
         return fileobj, length
-
-    @classmethod
-    def copy_body(cls, wsgi_input):
-        """
-        Copy a ``wsgi.input`` for reading.
-        """
-        pass
 
     @property
     def filtered_environ(self):
