@@ -1,10 +1,8 @@
 import os
 import re
-import cgi
-import tempfile
-from urlparse import parse_qs
-
 from wsgiref.util import guess_scheme
+
+import webob
 
 
 def cachedproperty(f):
@@ -68,10 +66,10 @@ class EnvironContext(object):
         Returns a list of sensitive GET/POST values to filter from logs.
         """
         values = set()
-        params = EnvironContext.params(self._environ)
+        params = webob.Request(self._environ).params
         for key in self._sensitive_keys:
             if key in params:
-                values |= set(params[key])
+                values |= set([params[key]])
         return values
 
     def __getitem__(self, name):
@@ -91,60 +89,6 @@ class EnvironContext(object):
         (1, 0, 1): 'CGI',
         (1, 1, 1): 'Multi thread/process CGI (?)',
     }
-
-    @classmethod
-    def params(cls, environ):
-        """
-        Given a WSGI environ context, returns a list of mapping of parsed GET
-        and POST variables.
-        """
-        environ = environ.copy()
-        params = parse_qs(environ.get('QUERY_STRING', ''))
-
-        environ['QUERY_STRING'] = ''
-        fp, length = EnvironContext._copy_body_to_tempfile(environ)
-        environ.setdefault('CONTENT_LENGTH', length)
-
-        fs = cgi.FieldStorage(
-            fp=fp,
-            environ=environ,
-            keep_blank_values=True
-        )
-
-        for k in fs:
-            if k in params:
-                params[k].extend(fs.getlist(k))
-            else:
-                params[k] = fs.getlist(k)
-
-        return params
-
-    @classmethod
-    def _copy_body_to_tempfile(cls, environ):
-        """
-        Copy wsgi.input to a tempfile so it can be reused.
-        """
-        try:
-            length = int(environ.get('CONTENT_LENGTH', 0))
-        except ValueError:
-            length = 0
-
-        fileobj = tempfile.SpooledTemporaryFile(1024*1024)
-        if length:
-            remaining = length
-            while remaining > 0:
-                data = environ['wsgi.input'].read(min(remaining, 65536))
-                if not data:
-                    raise IOError(
-                        "Client disconnected (%s more bytes were expected)"
-                        % remaining
-                    )
-                fileobj.write(data)
-                remaining -= len(data)
-
-        fileobj.seek(0)
-        environ['wsgi.input'] = fileobj
-        return fileobj, length
 
     @property
     def filtered_environ(self):
