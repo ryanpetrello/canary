@@ -21,9 +21,6 @@ Assuming ``logstash`` is running and bound to a **0mq** socket at
             charset => 'UTF-8'
         }
     }
-    output {
-        debug => true
-    }
 
 ...to report exceptions thrown by your WSGI application, wrap your WSGI app
 with ``canary.middleware.LogStashMiddleware``:
